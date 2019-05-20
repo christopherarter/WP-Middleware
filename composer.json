@@ -1,0 +1,13 @@
+{
+    "name": "christopherarter/wp-middleware",
+    "description": "A middleware for Wordpress' REST API",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Christopher Arter",
+            "email": "christopherarter@gmail.com"
+        }
+    ],
+    "require": {}
+}
