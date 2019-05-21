@@ -42,6 +42,22 @@ abstract class AbstractMiddleware
     protected $methodsToProtect = [];
 
     /**
+     * Route input provided to compare
+     * inbound route against. This could
+     * be a string or an array.
+     *
+     * @var string
+     */
+    protected $routeInput;
+
+    /**
+     * Determines if all requests
+     * should be rejected.
+     *
+     * @var boolean
+     */
+    protected $rejectAll = false;
+    /**
      * Array of MiddlewareRejection
      * objects.
      *
@@ -51,6 +67,14 @@ abstract class AbstractMiddleware
 
 
     /**
+     * Response object provided
+     * to check hook
+     *
+     * @var \WP_HTTP_Response
+     */
+    private $response;
+
+    /**
      * Hook to use to check
      * against request property.
      *
@@ -58,6 +82,12 @@ abstract class AbstractMiddleware
      */
     protected $outboundHook = 'rest_post_dispatch';
 
+    /**
+     * Hook used to check
+     * request against callbacks.s
+     *
+     * @var string
+     */
     protected $inboundHook = 'rest_pre_dispatch';
 
     public function __construct()
@@ -85,15 +115,14 @@ abstract class AbstractMiddleware
      * against an array of functions
      * to call.
      *
-     * @param string $route
+     * @param mixed $route
      * @param array $functions
      * @return void
      */
-    public function guard(string $route, array $functions): Middleware
+    public function guard($route, array $functions = []): Middleware
     {
-        $this->middleware[$route] = [
-            'callbacks' => $functions
-        ];
+        $this->routeInput = $route;
+        $this->middleware = $functions;
         return $this;
     }
 
@@ -104,23 +133,36 @@ abstract class AbstractMiddleware
      * is saved into the $rejections property
      * to be counted in the `check` method.
      *
-     * @param string $route
-     * @param $method
-     * @param \WP_HTTP_Response $response
      * @return void
      */
-    public function checkRoute(string $route, \WP_HTTP_Response $response) : void
-    {   
-        if ( $this->requestMethodMatch() ) {
-            foreach ( $this->middleware[$route] as $callbackGroup ) {
-                foreach ($callbackGroup as $callback) {
-                    if ( function_exists($callback)) {
-                        $result = call_user_func($callback, $this->request, $response);
-                        
-                        if ( $result instanceof MiddlewareRejection ) {
-                            $this->rejections[] = $result;
-                        }
-                    }
+    public function checkRoute() : void
+    {
+        if ( $this->requestMethodMatch() && $this->routePathMatch() ) {
+            if ( is_array($this->routeInput) ) {
+                foreach ( $this->routeInput as $route) {
+                    $this->checkCallbacks();
+                }
+            } else {
+                $this->checkCallbacks();
+            }
+        }
+    }
+
+    /**
+     * Iterate through the 
+     * callbacks in the $middleware
+     * property and see if they
+     * return MiddlewareRejection class.
+     *
+     * @return void
+     */
+    protected function checkCallbacks()
+    {
+        foreach ( $this->middleware as $callback ) {
+            if ( function_exists( $callback ) ) {
+                $result = call_user_func($callback, $this->request, $this->response);
+                if ( $result instanceof MiddlewareRejection ) {
+                    $this->rejections[] = $result;
                 }
             }
         }
@@ -138,6 +180,24 @@ abstract class AbstractMiddleware
     protected function requestMethodMatch() : bool
     {
         return ( in_array( $this->request->get_method(), $this->methodsToProtect ) );
+    }
+
+    /**
+     * Determines if there is
+     * a matching route.
+     *
+     * @return boolean
+     */
+    protected function routePathMatch() : bool
+    {
+        $requestRoute = $this->response->get_matched_route();
+
+        if ( ( is_array($this->routeInput) && in_array( $requestRoute, $this->routeInput ))
+        || $this->routeInput == $requestRoute ) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
@@ -160,11 +220,16 @@ abstract class AbstractMiddleware
      * Check inbound request
      * against registered middleware.
      *
-     * @param \WP_HTTP_Response $input
+     * @param \WP_HTTP_Response $response
      * @return \WP_HTTP_Response
      */
-    public function check( \WP_HTTP_Response $input): \WP_HTTP_Response
+    public function check( \WP_HTTP_Response $response): \WP_HTTP_Response
     {
+        $this->response = $response;
+
+        if ( $this->rejectAll) {
+            return $this->rejectWpResponse($this->response, new MiddlewareRejection());
+        }
 
         /**
          * If no HTTP Method setting method
@@ -181,16 +246,17 @@ abstract class AbstractMiddleware
          * callbacks and populate rejections
          * property.
          */
-        $this->checkRoute( $input->get_matched_route(), $input);
+        $this->checkRoute();
 
         
         // check rejections property.
         if ( count($this->rejections) > 0) {
 
             // send response to response factory.
-            return $this->rejectWpResponse($input, $this->rejections[0]);
+            return $this->rejectWpResponse($this->response, $this->rejections[0]);
         }
-        return $input;
+
+        return $this->response;
     }
 }
 
