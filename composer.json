@@ -9,5 +9,12 @@
             "email": "christopherarter@gmail.com"
         }
     ],
-    "require": {}
+    "autoload": {
+        "psr-4": {"PComm\\Api\\Middleware\\": "src/"},
+        "files": ["src/helpers.php"]
+    },
+    "require": {},
+    "require-dev": {
+        "symfony/var-dumper": "^4.2"
+    }
 }

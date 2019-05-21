@@ -1,5 +1,6 @@
-<?php 
+<?php
 
+namespace PComm\Api\Middleware;
 /**
  * This trait adds the helper
  * methods to designate the
@@ -15,7 +16,7 @@ trait MiddlewareMethods
      */
     public function get(...$input) : void
     {
-        $this->methodToProtect = 'GET';
+        $this->methodToProtect[] = 'GET';
         $this->guard(...$input);
     }
 
@@ -27,7 +28,7 @@ trait MiddlewareMethods
      */
     public function post(...$input) : void
     {
-        $this->methodToProtect = 'POST';
+        $this->methodToProtect[] = 'POST';
         $this->guard(...$input);
     }
 
@@ -39,7 +40,7 @@ trait MiddlewareMethods
      */
     public function put(...$input) : void
     {
-        $this->methodToProtect = 'PUT';
+        $this->methodToProtect[] = 'PUT';
         $this->guard(...$input);
     }
 
@@ -51,7 +52,7 @@ trait MiddlewareMethods
      */
     public function patch(...$input) : void
     {
-        $this->methodToProtect = 'PUT';
+        $this->methodToProtect[] = 'PUT';
         $this->guard(...$input);
     }
 
@@ -63,7 +64,7 @@ trait MiddlewareMethods
      */
     public function delete(...$input) : void
     {
-        $this->methodToProtect = 'DELETE';
+        $this->methodToProtect[] = 'DELETE';
         $this->guard(...$input);
     }
 
@@ -75,13 +76,13 @@ trait MiddlewareMethods
      */
     public function head(...$input) : void
     {
-        $this->methodToProtect = 'DELETE';
+        $this->methodToProtect[] = 'DELETE';
         $this->guard(...$input);
     }
 
     public function methods(...$input) : void
     {
-        $this->methodToProtect = $input[0];
+        $this->methodToProtect[] = $input[0];
         unset($input[0]);
         $this->guard(...$input);
     }

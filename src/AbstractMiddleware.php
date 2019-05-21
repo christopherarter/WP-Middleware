@@ -1,5 +1,17 @@
 <?php
 
+namespace PComm\Api\Middleware;
+
+/**
+ * This is the abstract class
+ * that catches the request 
+ * at the `rest_pre_dispatch` hook
+ * and passes it to the `rest_pre_dispatch`
+ * hook to check the request, and either
+ * allow or reject it in a series of 
+ * callbacks. This class is extended
+ * in `Middleware.php`
+ */
 abstract class AbstractMiddleware
 {
     use MiddlewareMethods;
@@ -10,14 +22,14 @@ abstract class AbstractMiddleware
      *
      * @var array
      */
-    private $middleware = [];
+    protected $middleware = [];
 
     /**
      * Inbound request object.
      *
      * @var WP_REST_Request
      */
-    private $request;
+    protected $request;
 
     /**
      * Request method for
@@ -27,7 +39,7 @@ abstract class AbstractMiddleware
      *
      * @var string
      */
-    private $methodToProtect;
+    protected $methodsToProtect = [];
 
     /**
      * Array of MiddlewareRejection
@@ -44,9 +56,9 @@ abstract class AbstractMiddleware
      *
      * @var string
      */
-    private $outboundHook = 'rest_post_dispatch';
+    protected $outboundHook = 'rest_post_dispatch';
 
-    private $inboundHook = 'rest_pre_dispatch';
+    protected $inboundHook = 'rest_pre_dispatch';
 
     public function __construct()
     {
@@ -97,22 +109,35 @@ abstract class AbstractMiddleware
      * @param \WP_HTTP_Response $response
      * @return void
      */
-    public function checkRoute(string $route, $method, \WP_HTTP_Response $response) : void
-    {
-        $requestMethod = $this->request->get_method();
-        
-        if ( $requestMethod == $method || ( is_array($method) && in_array( $requestMethod, $method ) ) ) {
-            foreach ($this->middleware[$route] as $callbackGroup) {
+    public function checkRoute(string $route, \WP_HTTP_Response $response) : void
+    {   
+        if ( $this->requestMethodMatch() ) {
+            foreach ( $this->middleware[$route] as $callbackGroup ) {
                 foreach ($callbackGroup as $callback) {
                     if ( function_exists($callback)) {
                         $result = call_user_func($callback, $this->request, $response);
-                        if ( $result instanceof \MiddlewareRejection ) {
+                        
+                        if ( $result instanceof MiddlewareRejection ) {
                             $this->rejections[] = $result;
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * This method takes the 
+     * current $request object property
+     * and determines if a given input string
+     * or array of strings containing methods
+     * match the request's method.
+     *
+     * @return boolean
+     */
+    protected function requestMethodMatch() : bool
+    {
+        return ( in_array( $this->request->get_method(), $this->methodsToProtect ) );
     }
 
     /**
@@ -124,7 +149,7 @@ abstract class AbstractMiddleware
      * @param \MiddlewareRejection $MiddlewareRejection
      * @return void
      */
-    public function rejectWpResponse(\WP_HTTP_Response $response, \MiddlewareRejection $MiddlewareRejection): WP_HTTP_Response
+    public function rejectWpResponse(\WP_HTTP_Response $response, MiddlewareRejection $MiddlewareRejection): \WP_HTTP_Response
     {
         $response->set_status((int) $MiddlewareRejection->status );
         $response->set_data($MiddlewareRejection->message);
@@ -147,18 +172,18 @@ abstract class AbstractMiddleware
          * request. This allows `guard()` to protect
          * all methods.
          */
-        if (!$this->methodToProtect) {
-            $this->methodToProtect = $this->request->get_method();
+        if (!$this->methodsToProtect) {
+            $this->methodsToProtect[] = $this->request->get_method();
         }
-
 
         /**
          * Check route against all
          * callbacks and populate rejections
          * property.
          */
-        $this->checkRoute( $input->get_matched_route(), $this->methodToProtect, $input);
+        $this->checkRoute( $input->get_matched_route(), $input);
 
+        
         // check rejections property.
         if ( count($this->rejections) > 0) {
 

@@ -10,9 +10,9 @@
  * @param integer $status
  * @return void
  */
-function reject($message, $status = 403) : MiddlewareRejection
+function reject($message, $status = 403)
 {
-    return new MiddlewareRejection($message, (int) $status);
+    return new \PComm\Api\Middleware\MiddlewareRejection( $message, (int) $status );
 }
 
 /**
@@ -22,7 +22,7 @@ function reject($message, $status = 403) : MiddlewareRejection
  *
  * @return void
  */
-function middleware() : Middleware
+function middleware()
 {
-    return new Middleware();
+    return new \PComm\Api\Middleware\Middleware();
 }

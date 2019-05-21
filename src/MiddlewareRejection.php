@@ -1,5 +1,7 @@
 <?php
 
+namespace PComm\Api\Middleware;
+
 /**
  * This class is used to designate
  * message & status of rejection. 
