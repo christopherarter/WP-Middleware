@@ -63,7 +63,7 @@ abstract class AbstractMiddleware
      *
      * @var array
      */
-    private $rejections = [];
+    protected $rejections = [];
 
 
     /**
@@ -72,7 +72,7 @@ abstract class AbstractMiddleware
      *
      * @var \WP_HTTP_Response
      */
-    private $response;
+    protected $response;
 
     /**
      * Hook to use to check
@@ -135,7 +135,7 @@ abstract class AbstractMiddleware
      *
      * @return void
      */
-    public function checkRoute() : void
+    protected function checkRoute() : void
     {
         if ( $this->requestMethodMatch() && $this->routePathMatch() ) {
             if ( is_array($this->routeInput) ) {
@@ -209,7 +209,7 @@ abstract class AbstractMiddleware
      * @param \MiddlewareRejection $MiddlewareRejection
      * @return void
      */
-    public function rejectWpResponse(\WP_HTTP_Response $response, MiddlewareRejection $MiddlewareRejection): \WP_HTTP_Response
+    public function rejectWpResponse(\WP_HTTP_Response $response, MiddlewareRejection $MiddlewareRejection) : \WP_HTTP_Response
     {
         $response->set_status((int) $MiddlewareRejection->status );
         $response->set_data($MiddlewareRejection->message);
@@ -223,7 +223,7 @@ abstract class AbstractMiddleware
      * @param \WP_HTTP_Response $response
      * @return \WP_HTTP_Response
      */
-    public function check( \WP_HTTP_Response $response): \WP_HTTP_Response
+    public function check( \WP_HTTP_Response $response) : \WP_HTTP_Response
     {
         $this->response = $response;
 
