@@ -1,6 +1,6 @@
 <?php
 
-namespace PComm\Api\Middleware;
+namespace WPMiddleware;
 /**
  * This trait adds the helper
  * methods to designate the

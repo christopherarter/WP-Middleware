@@ -1,6 +1,6 @@
 <?php
 
-namespace PComm\Api\Middleware;
+namespace WPMiddleware;
 
 /**
  * This class is used to designate

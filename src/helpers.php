@@ -12,7 +12,7 @@
  */
 function reject($message, $status = 403)
 {
-    return new \PComm\Api\Middleware\MiddlewareRejection( $message, (int) $status );
+    return new \WPMiddleware\MiddlewareRejection( $message, (int) $status );
 }
 
 /**
@@ -24,5 +24,5 @@ function reject($message, $status = 403)
  */
 function middleware()
 {
-    return new \PComm\Api\Middleware\Middleware();
+    return new \WPMiddleware\Middleware();
 }
