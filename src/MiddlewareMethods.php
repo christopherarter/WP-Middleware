@@ -79,6 +79,7 @@ trait MiddlewareMethods
         $this->methodToProtect[] = 'DELETE';
         $this->guard(...$input);
     }
+    
 
     /**
      * pass in an array of methods
